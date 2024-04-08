@@ -1,8 +1,14 @@
+import java.util.ArrayList;
+
 import javax.swing.JOptionPane;
 
 public class CaixaEletronico {
-    private ContaBancaria conta;
-    private ContaBancaria conta1;
+    
+    private ArrayList<ContaBancaria> contas;
+
+    public CaixaEletronico() {
+        this.contas = new ArrayList<>();
+    }
 
     public void renderConta() {
         String Str_numero = JOptionPane.showInputDialog("Digite o número da conta:");
@@ -17,6 +23,14 @@ public class CaixaEletronico {
             JOptionPane.showMessageDialog(null, "Conta não encontrada.");
         }
     }
+
+//-------------------------------------------------------------------------------------------------------------------------------------------
+
+private void listarContas() {
+    for (ContaBancaria conta : contas) {
+        JOptionPane.showMessageDialog(null, "Número da conta: " + conta.getNumero() + ", Nome do cliente: " + conta.getTitular().getNome());
+    }
+}
 
 //---------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -45,30 +59,11 @@ public void alterarTaxaRendimento() {
             String saldoInicialInput = JOptionPane.showInputDialog("Digite o saldo inicial:");
             double saldoInicial = Double.parseDouble(saldoInicialInput);
 
-            conta = new ContaBancaria(saldoInicial, cliente, limiteInput);
+            contas.add(new ContaBancaria(saldoInicial, cliente, limiteInput));
         } else {
-            conta = new ContaBancaria(cliente, limiteInput);
+            contas.add(new ContaBancaria(cliente, limiteInput));
         }
-        JOptionPane.showMessageDialog(null, "Conta criada com o número: " + conta.getNumero() + "\n\nNome do titular: " + cliente.getNome());
-
-        nome = JOptionPane.showInputDialog("Criando segunda conta\n\n" + "Digite o nome do titular:");
-        cpf = JOptionPane.showInputDialog("Digite o CPF:");
-        Cliente cliente1 = new Cliente(nome, cpf);
-
-        String limiteInicial1 = JOptionPane.showInputDialog("Digite o limite inicial:");
-        double limiteInput1 = Double.parseDouble(limiteInicial1);
-
-        opcao = JOptionPane.showInputDialog("Deseja informar saldo inicial? (s/n)");
-        if (opcao.equals("s")) {
-            String saldoInicialInput = JOptionPane.showInputDialog("Digite o saldo inicial:");
-            double saldoInicial = Double.parseDouble(saldoInicialInput);
-
-            conta1 = new ContaBancaria(saldoInicial, cliente1, limiteInput1);
-        } else {
-            conta1 = new ContaBancaria(cliente1, limiteInput1);
-        }
-        JOptionPane.showMessageDialog(null, "Conta criada com o número: " + conta1.getNumero() + "\n\nNome do titular: " + cliente1.getNome());
-        
+        JOptionPane.showMessageDialog(null, "Conta criada com o número: " + contas.get(contas.size() - 1).getNumero() + "\n\nNome do titular: " + cliente.getNome());
     }
 
 //---------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -78,24 +73,11 @@ public void alterarTaxaRendimento() {
         String Str_numero = JOptionPane.showInputDialog("Digite o número da conta:");
         int numero = Integer.parseInt(Str_numero);
 
-        if (numero == conta.getNumero()) {
+        ContaBancaria conta = this.encontrarConta(numero);
 
-            if (conta == null) {
-                JOptionPane.showMessageDialog(null, "Conta não criada.");
-            } else {
-                JOptionPane.showMessageDialog(null, "Titular: " + conta.getTitular().getNome() + "\n" + "CPF: " + conta.getTitular().getCpf());
-                JOptionPane.showMessageDialog(null, "Saldo: " + conta.consultarSaldo());
-            }
-        }
+        if (conta != null) {
+            JOptionPane.showMessageDialog(null, "Titular: " + conta.getTitular().getNome() + "\n" + "CPF: " + conta.getTitular().getCpf() + "\nSaldo: " + conta.consultarSaldo());
 
-        else if (numero == conta1.getNumero()) {
-
-            if (conta1 == null) {
-                JOptionPane.showMessageDialog(null, "Conta não criada.");
-            } else {
-                JOptionPane.showMessageDialog(null, "Titular: " + conta1.getTitular().getNome());
-                JOptionPane.showMessageDialog(null, "Saldo: " + conta1.consultarSaldo());
-            }
         } else {
             System.out.println("Conta não encontrada.");
         }
@@ -108,17 +90,13 @@ public void alterarTaxaRendimento() {
         String Str_numero = JOptionPane.showInputDialog("Digite o número da conta:");
         int numero = Integer.parseInt(Str_numero);
 
+        ContaBancaria conta = this.encontrarConta(numero);
+
         if (numero == conta.getNumero()) {
                 String valorInput = JOptionPane.showInputDialog("Digite o valor a depositar:");
                 double valor = Double.parseDouble(valorInput);
                 conta.depositar(valor);
         }
-        
-        else if (numero == conta1.getNumero()) {
-                String valorInput = JOptionPane.showInputDialog("Digite o valor a depositar:");
-                double valor = Double.parseDouble(valorInput);
-                conta1.depositar(valor);
-            }
 
         else{
             JOptionPane.showMessageDialog(null, "Nao foi possivel achar a conta");
@@ -133,6 +111,8 @@ public void alterarTaxaRendimento() {
         String Str_valor = JOptionPane.showInputDialog("Digite o valor a ser sacado:");
         double valor = Double.parseDouble(Str_valor);
 
+        ContaBancaria conta = this.encontrarConta(numero);
+
         if (numero == conta.getNumero()) {
             if (conta.sacar(valor)) {
                 JOptionPane.showMessageDialog(null, "Saque realizado com sucesso.");
@@ -141,16 +121,40 @@ public void alterarTaxaRendimento() {
             }
         }
 
-        else if (numero == conta1.getNumero()) {
-            if (conta1.sacar(valor)) {
-                JOptionPane.showMessageDialog(null, "Saque realizado com sucesso.");
-            } else {
-                JOptionPane.showMessageDialog(null, "Saldo insuficiente.");
-            }
-        } else {
+        else {
             JOptionPane.showMessageDialog(null, "Conta não encontrada.");
         }
     }
+
+//--------------------------------------------------------------------------------------------------------------------------------------------------------
+
+public void removerConta() {
+    String numeroConta = JOptionPane.showInputDialog("Informe o número da conta a ser removida:");
+    int numero = Integer.parseInt(numeroConta);
+
+    ContaBancaria contaARemover = null;
+    for (ContaBancaria conta : contas) {
+        if (conta.getNumero() == numero) {
+            if (conta.consultarSaldo() > 0) {
+                JOptionPane.showMessageDialog(null, "Não é possível cancelar contas com saldo disponível.");
+                return;
+            } else if (conta.consultarSaldo() < 0) {
+                JOptionPane.showMessageDialog(null, "Não é possível cancelar contas em débito.");
+                return;
+            } else {
+                contaARemover = conta;
+                break;
+            }
+        }
+    }
+
+    if (contaARemover != null) {
+        contas.remove(contaARemover);
+        JOptionPane.showMessageDialog(null, "Conta removida com sucesso.");
+    } else {
+        JOptionPane.showMessageDialog(null, "Conta não encontrada.");
+    }
+}
 
 //---------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -175,13 +179,12 @@ public void alterarTaxaRendimento() {
 //---------------------------------------------------------------------------------------------------------------------------------------------------------
 
     public ContaBancaria encontrarConta(int numero) {
-        if (conta != null && conta.getNumero() == numero) {
-            return conta;
-        } else if (conta1 != null && conta1.getNumero() == numero) {
-            return conta1;
-        } else {
-            return null;
+        for (ContaBancaria conta : contas) {
+            if (conta.getNumero() == numero) {
+                return conta;
+            }
         }
+        return null;
     }
 
 //---------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -191,13 +194,33 @@ public void alterarTaxaRendimento() {
         do{
             opcao = exibirMenu();
             executarMenu(opcao);
-        }while (!opcao.equals("8"));
+        }while (!opcao.equals("11"));
     }
+
+//-----------------------------------------------------------------------------------------------------------------------------------------------------------
+
+private void filtrarContasPeloNomeDoCliente() {
+    String nome = JOptionPane.showInputDialog("Informe o nome (ou parte do nome) do cliente:");
+    boolean isEmpty = false;
+    String juntador = "";
+    for (ContaBancaria conta : contas) {
+        if (conta.getTitular().getNome().contains(nome)) {
+            juntador += conta.getNumero() + " - " + conta.getTitular().getNome() + "\n";
+        isEmpty = true;
+        }
+    }
+    if (!isEmpty){
+        JOptionPane.showMessageDialog(null, "Conta Não Encontrada");
+    }
+    else{
+        JOptionPane.showMessageDialog(null, juntador);
+    }
+}
 
 //---------------------------------------------------------------------------------------------------------------------------------------------------------
 
     public String exibirMenu(){
-        return JOptionPane.showInputDialog(null, "1 - Criar conta\n2 - Consultar saldo\n3 - Depositar\n4 - Sacar\n5 - Transferir\n6 - Rendimento\n7 - Alterar Rendimento\n\n Any - Sair");
+        return JOptionPane.showInputDialog(null, "1 - Criar conta\n2 - Consultar saldo\n3 - Depositar\n4 - Sacar\n5 - Transferir\n6 - Rendimento\n7 - Alterar Rendimento\n8 - Listar Contas\n9 - Remover Conta\n10 - Filtro de Conta\n\n Any - Sair");
     }
 
     public void executarMenu(String opcao) {    
@@ -223,6 +246,15 @@ public void alterarTaxaRendimento() {
                 case "7":
                     alterarTaxaRendimento();
                     break;
+                case "8":
+                    listarContas();
+                    break;
+                case "9":
+                    removerConta();
+                    break;
+                case "10":
+                    filtrarContasPeloNomeDoCliente();
+                    break;                 
                 default:
                     JOptionPane.showMessageDialog(null, "Até mais !!!");
                     System.exit(0);
